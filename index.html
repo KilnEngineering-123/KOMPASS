@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Equipment Abnormality & Improvement Reporting</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ===== STYLES & THEME ===== */
+:root{--bg:#f6f5f2;--card:#fff;--ink:#16130f;--mute:#6b665e;--line:#e4e0d8;--red:#d62828;--red-d:#a81c1c;--yel:#ffc400;--input:#fff;--shadow:0 1px 2px rgba(0,0,0,.06)}
+[data-theme=dark]{--bg:#121212;--card:#1d1d1d;--ink:#f2efe9;--mute:#a19b90;--line:#333;--red:#ff4b4b;--red-d:#e03131;--yel:#ffd028;--input:#262626;--shadow:none}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Barlow,system-ui,sans-serif}
+h1,h2,h3{font-family:'Barlow Semi Condensed',Barlow,sans-serif;margin:0;letter-spacing:.2px}
+header{background:#111;color:#fff;border-bottom:4px solid var(--yel);position:sticky;top:0;z-index:20}
+.bar{max-width:1280px;margin:auto;padding:10px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:'Barlow Semi Condensed';font-size:19px;font-weight:700}
+.brand i{width:14px;height:30px;background:var(--red);display:block;box-shadow:6px 0 0 var(--yel)}
+.brand span{margin-left:6px}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav button,.tbtn{background:transparent;border:0;color:#ddd;padding:8px 14px;font:600 14px Barlow;cursor:pointer;border-bottom:3px solid transparent}
+nav button.on{color:#fff;border-color:var(--red)}
+.tbtn{border:1px solid #555;border-radius:6px;padding:6px 10px}
+main{max-width:1280px;margin:auto;padding:18px 16px 60px}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;box-shadow:var(--shadow)}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:14px 0}
+.kpi{border-left:5px solid var(--ink);padding:12px 14px}
+.kpi b{display:block;font:700 32px 'Barlow Semi Condensed';line-height:1.1}
+.kpi small{color:var(--mute)}
+.kpi.pr{border-color:var(--red)}.kpi.sg{border-color:var(--yel)}.kpi.op{border-color:var(--red)}.kpi.pg{border-color:var(--yel)}.kpi.dn{border-color:#2e9e57}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:3px;font-weight:500}
+input,select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--input);color:var(--ink);font:inherit}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--yel);outline-offset:1px}
+textarea{min-height:110px;resize:vertical}
+.btn{background:var(--red);color:#fff;border:0;border-radius:6px;padding:10px 18px;font:600 15px Barlow;cursor:pointer}
+.btn:hover{background:var(--red-d)}.btn:disabled{opacity:.6;cursor:wait}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.two{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);margin-bottom:14px}
+.status-row{display:flex;gap:10px;margin-top:10px}
+.status-row div{flex:1;text-align:center;padding:10px 4px;border-radius:6px;background:var(--bg)}
+.status-row b{display:block;font:700 24px 'Barlow Semi Condensed'}
+.chartbox{position:relative;height:260px}
+.legend{max-height:230px;overflow:auto;margin-top:10px;font-size:13px}
+.legend div{display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid var(--line)}
+.legend i{width:10px;height:10px;border-radius:2px;flex:none}
+.legend span{flex:1}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;background:#111;color:#fff;padding:9px 10px;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+td.desc{min-width:220px;max-width:380px}
+.badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.b-Open{background:var(--red);color:#fff}.b-On\ Progress{background:var(--yel);color:#111}.b-Done{background:#2e9e57;color:#fff}
+.form{max-width:720px;margin:auto}
+.form .grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.form .full{grid-column:1/-1}
+.muted{color:var(--mute);font-size:13px}
+.empty{padding:26px;text-align:center;color:var(--mute)}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+#modal.on{display:flex}
+#modal .card{max-width:560px;width:100%;max-height:90vh;overflow:auto}
+dl{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:12px 0}
+dt{color:var(--mute)}dd{margin:0;white-space:pre-wrap}
+#toast{position:fixed;right:16px;bottom:16px;z-index:99;display:flex;flex-direction:column;gap:8px}
+#toast div{padding:11px 16px;border-radius:6px;color:#fff;background:#2e9e57;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#toast div.err{background:var(--red-d)}
+@media(max-width:820px){.two{grid-template-columns:1fr}nav{margin-left:0;width:100%}nav button{flex:1;padding:8px 4px}dl{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<!-- ===== INDEX / KERANGKA ===== -->
+<header><div class="bar">
+  <div class="brand"><i></i><span>Equipment Reporting</span></div>
+  <nav id="nav">
+    <button data-t="dash" class="on">Dashboard</button>
+    <button data-t="prob">Problem Report</button>
+    <button data-t="sugg">Improvement Suggestion</button>
+  </nav>
+  <button class="tbtn" id="themeBtn" aria-label="Ganti tema">Dark Mode</button>
+</div></header>
+
+<main>
+<!-- ===== DASHBOARD ===== -->
+<section id="dash" class="on">
+  <div class="card filters">
+    <div><label for="fFrom">Tanggal mulai</label><input type="date" id="fFrom"></div>
+    <div><label for="fTo">Tanggal akhir</label><input type="date" id="fTo"></div>
+    <div><label for="fStatus">Status</label><select id="fStatus"><option value="">Semua status</option><option>Open</option><option>On Progress</option><option>Done</option></select></div>
+    <div><label for="fEquip">Equipment</label><select id="fEquip"><option value="">Semua equipment</option></select></div>
+    <div style="display:flex;gap:8px"><button class="btn ghost" id="fReset">Reset filter</button><button class="btn" id="fRefresh">Refresh</button></div>
+  </div>
+  <div class="grid kpis">
+    <div class="card kpi pr"><b id="kTotal">0</b><small>Total Problem Report</small></div>
+    <div class="card kpi sg"><b id="kSugg">0</b><small>Total Improvement Suggestion</small></div>
+    <div class="card kpi op"><b id="kOpen">0</b><small>Open</small></div>
+    <div class="card kpi pg"><b id="kProg">0</b><small>On Progress</small></div>
+    <div class="card kpi dn"><b id="kDone">0</b><small>Done</small></div>
+  </div>
+  <div class="grid two">
+    <div class="card"><h3>Distribusi Masalah per Equipment</h3>
+      <div class="chartbox"><canvas id="donut"></canvas></div>
+      <div class="legend" id="legend"></div></div>
+    <div class="card"><h3>Status Monitoring</h3>
+      <div class="status-row"><div><b id="sOpen">0</b>Open</div><div><b id="sProg">0</b>On Progress</div><div><b id="sDone">0</b>Done</div></div>
+      <div class="chartbox" style="height:200px;margin-top:14px"><canvas id="bar"></canvas></div>
+      <p class="muted" id="syncInfo"></p></div>
+  </div>
+  <div class="card"><h3 style="margin-bottom:10px">Tabel Laporan</h3>
+    <div class="tw"><table><thead><tr><th>Report ID</th><th>Tanggal</th><th>Pelapor</th><th>Equipment</th><th>Deskripsi</th><th>Status</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div>
+  </div>
+</section>
+
+<!-- ===== PROBLEM FORM ===== -->
+<section id="prob"><form class="card form" id="pForm" novalidate>
+  <h2>Laporkan Masalah Equipment</h2><p class="muted">Status laporan baru otomatis Open.</p>
+  <div class="grid">
+    <div><label for="pName">Nama Pelapor</label><input id="pName" required></div>
+    <div><label for="pPos">Posisi Kerja</label><input id="pPos" required></div>
+    <div class="full"><label for="pEquip">Equipment Name</label><select id="pEquip" required></select></div>
+    <div><label for="pDate">Tanggal Kejadian</label><input type="date" id="pDate" required></div>
+    <div><label for="pTime">Waktu Kejadian</label><input type="time" id="pTime" required></div>
+    <div class="full"><label for="pDesc">Deskripsi Masalah</label><textarea id="pDesc" required></textarea></div>
+    <div><label for="pStatus">Status</label><select id="pStatus" disabled><option>Open</option></select></div>
+  </div>
+  <p><button class="btn" type="submit">Kirim laporan</button></p>
+</form></section>
+
+<!-- ===== SUGGESTION FORM ===== -->
+<section id="sugg"><form class="card form" id="sForm" novalidate>
+  <h2>Saran Improvement</h2><p class="muted">Usulkan perbaikan untuk equipment atau proses produksi.</p>
+  <div class="grid">
+    <div><label for="sName">Nama Pelapor</label><input id="sName" required></div>
+    <div><label for="sPos">Posisi Kerja</label><input id="sPos" required></div>
+    <div class="full"><label for="sEquip">Equipment Name</label><select id="sEquip" required></select></div>
+    <div class="full"><label for="sText">Saran Improvement</label><textarea id="sText" required></textarea></div>
+    <div><label for="sImpact">Dampak Improvement</label><select id="sImpact" required><option value="">Pilih dampak</option><option>Quality</option><option>Cost</option><option>Delivery</option><option>Safety</option><option>Morale</option><option>Environment</option></select></div>
+  </div>
+  <p><button class="btn" type="submit">Kirim saran</button></p>
+</form></section>
+</main>
+
+<div id="modal"><div class="card" id="mBody"></div></div>
+<div id="toast" role="status"></div>
+
+<script>
+/* ===== JAVASCRIPT ===== */
+const API = 'https://script.google.com/macros/s/AKfycby_gKwilhmVUJ-v6Z5YCCuFNac7zEKz8Yim8r3zfKCfl9bhyPNiPbXQMZuXsrqU60CL/exec';
+const REFRESH_MS = 60000;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let DB = {equipment: [], problems: [], suggestions: []}, donut, bar, view = [];
+
+function toast(msg, ok = true) {
+  const d = document.createElement('div'); d.textContent = msg; if (!ok) d.className = 'err';
+  $('#toast').appendChild(d); setTimeout(() => d.remove(), 4500);
+}
+async function api(action, payload) {
+  const r = payload
+    ? await fetch(API, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({action, ...payload})})
+    : await fetch(API + '?action=' + action + '&_=' + Date.now());
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'Terjadi kesalahan');
+  return j.data;
+}
+
+/* tema & navigasi */
+function setTheme(t) {
+  document.documentElement.dataset.theme = t; $('#themeBtn').textContent = t === 'dark' ? 'Light Mode' : 'Dark Mode';
+  try { localStorage.setItem('theme', t); } catch (e) {}
+  if (donut) render();
+}
+$('#themeBtn').onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+$('#nav').onclick = e => {
+  const t = e.target.dataset.t; if (!t) return;
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b === e.target));
+  document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === t));
+};
+
+/* data */
+async function load(silent) {
+  try {
+    DB = await api('init'); fillEquip(); render();
+    $('#syncInfo').textContent = 'Sinkron dari Google Sheets: ' + new Date().toLocaleTimeString('id-ID');
+    if (!silent) toast('Data berhasil dimuat');
+  } catch (e) { toast('Gagal terhubung ke Google Sheets: ' + e.message, false); }
+}
+function fillEquip() {
+  const opts = '<option value="">Pilih equipment</option>' + DB.equipment.map((q, i) =>
+    `<option value="${i}">${esc(q.name)}${q.process ? ' — ' + esc(q.process) : ''}${q.code ? ' (' + esc(q.code) + ')' : ''}</option>`).join('');
+  const keep = [$('#pEquip').value, $('#sEquip').value];
+  $('#pEquip').innerHTML = opts; $('#sEquip').innerHTML = opts;
+  $('#pEquip').value = keep[0]; $('#sEquip').value = keep[1];
+  const names = [...new Set(DB.equipment.map(q => q.name))].sort(), cur = $('#fEquip').value;
+  $('#fEquip').innerHTML = '<option value="">Semua equipment</option>' + names.map(n => `<option>${esc(n)}</option>`).join('');
+  $('#fEquip').value = cur;
+}
+
+/* filter + render dashboard */
+function filtered() {
+  const f = $('#fFrom').value, t = $('#fTo').value, s = $('#fStatus').value, e = $('#fEquip').value;
+  const P = DB.problems.filter(r => (!f || r.date >= f) && (!t || r.date <= t) && (!s || r.status === s) && (!e || r.equipment === e));
+  const S = DB.suggestions.filter(r => { const d = r.timestamp.slice(0, 10); return (!f || d >= f) && (!t || d <= t) && (!e || r.equipment === e); });
+  return {P, S};
+}
+function palette(n) {
+  const base = ['#d62828', '#ffc400', '#16130f', '#8f1d1d', '#ff8c00', '#6b665e', '#ff6b6b', '#c79a00', '#444', '#e85d04'];
+  return Array.from({length: n}, (_, i) => base[i % base.length]);
+}
+function render() {
+  const {P, S} = filtered(); view = P;
+  const c = k => P.filter(r => r.status === k).length;
+  $('#kTotal').textContent = P.length; $('#kSugg').textContent = S.length;
+  ['Open', 'Prog', 'Done'].forEach((k, i) => { const v = c(['Open', 'On Progress', 'Done'][i]); $('#k' + k).textContent = v; $('#s' + k).textContent = v; });
+
+  const cnt = {}; P.forEach(r => cnt[r.equipment] = (cnt[r.equipment] || 0) + 1);
+  const rank = Object.entries(cnt).sort((a, b) => b[1] - a[1]), colors = palette(rank.length);
+  const dark = document.documentElement.dataset.theme === 'dark', txt = dark ? '#f2efe9' : '#16130f', edge = dark ? '#1d1d1d' : '#fff';
+  donut && donut.destroy();
+  donut = new Chart($('#donut'), {type: 'doughnut',
+    data: {labels: rank.map(r => r[0]), datasets: [{data: rank.map(r => r[1]), backgroundColor: colors, borderColor: edge, borderWidth: 2}]},
+    options: {maintainAspectRatio: false, cutout: '62%', plugins: {legend: {display: false},
+      tooltip: {callbacks: {label: x => ` ${x.raw} laporan (${(x.raw / P.length * 100).toFixed(1)}%)`}}}}});
+  $('#legend').innerHTML = rank.length ? rank.map((r, i) =>
+    `<div><i style="background:${colors[i]}"></i><span>${esc(r[0])}</span><b>${r[1]}</b> <small class="muted">(${(r[1] / P.length * 100).toFixed(1)}%)</small></div>`).join('')
+    : '<div class="empty">Belum ada data untuk filter ini</div>';
+
+  bar && bar.destroy();
+  bar = new Chart($('#bar'), {type: 'bar',
+    data: {labels: ['Open', 'On Progress', 'Done'], datasets: [{data: [c('Open'), c('On Progress'), c('Done')], backgroundColor: ['#d62828', '#ffc400', '#2e9e57']}]},
+    options: {maintainAspectRatio: false, plugins: {legend: {display: false}},
+      scales: {y: {beginAtZero: true, ticks: {precision: 0, color: txt}, grid: {color: dark ? '#333' : '#e4e0d8'}}, x: {ticks: {color: txt}, grid: {display: false}}}}});
+
+  const sorted = [...P].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+  $('#tbody').innerHTML = sorted.length ? sorted.map(r => `<tr><td>${esc(r.id)}</td><td>${esc(r.date)}<br><small class="muted">${esc(r.time)}</small></td><td>${esc(r.reporter)}</td><td>${esc(r.equipment)}</td>
+    <td class="desc">${esc(r.description.length > 110 ? r.description.slice(0, 110) + '…' : r.description)}</td>
+    <td><span class="badge b-${esc(r.status)}">${esc(r.status)}</span></td><td><button class="btn ghost" data-id="${esc(r.id)}">Detail</button></td></tr>`).join('')
+    : '<tr><td colspan="7" class="empty">Belum ada laporan yang cocok dengan filter</td></tr>';
+}
+['#fFrom', '#fTo', '#fStatus', '#fEquip'].forEach(s => $(s).onchange = render);
+$('#fReset').onclick = () => { ['#fFrom', '#fTo', '#fStatus', '#fEquip'].forEach(s => $(s).value = ''); render(); };
+$('#fRefresh').onclick = () => load();
+
+/* detail laporan + ubah status */
+$('#tbody').onclick = e => {
+  const id = e.target.dataset.id; if (!id) return;
+  const r = DB.problems.find(x => x.id === id); if (!r) return;
+  $('#mBody').innerHTML = `<h2>${esc(r.id)}</h2><dl>
+    <dt>Pelapor</dt><dd>${esc(r.reporter)} (${esc(r.position)})</dd><dt>Equipment</dt><dd>${esc(r.equipment)}${r.code ? ' — ' + esc(r.code) : ''}</dd>
+    <dt>Kejadian</dt><dd>${esc(r.date)} ${esc(r.time)}</dd><dt>Dicatat</dt><dd>${esc(r.timestamp)}</dd><dt>Deskripsi</dt><dd>${esc(r.description)}</dd></dl>
+    <label for="mStatus">Status</label><select id="mStatus">${['Open', 'On Progress', 'Done'].map(s => `<option${s === r.status ? ' selected' : ''}>${s}</option>`).join('')}</select>
+    <p style="display:flex;gap:8px"><button class="btn" id="mSave">Simpan status</button><button class="btn ghost" id="mClose">Tutup</button></p>`;
+  $('#modal').classList.add('on');
+  $('#mClose').onclick = () => $('#modal').classList.remove('on');
+  $('#mSave').onclick = async ev => {
+    ev.target.disabled = true;
+    try { await api('updateStatus', {id, status: $('#mStatus').value}); toast('Status diperbarui'); $('#modal').classList.remove('on'); await load(true); }
+    catch (err) { toast('Gagal memperbarui status: ' + err.message, false); ev.target.disabled = false; }
+  };
+};
+$('#modal').onclick = e => { if (e.target.id === 'modal') $('#modal').classList.remove('on'); };
+
+/* submit form */
+function need(ids) {
+  for (const i of ids) { const el = $(i); if (!String(el.value).trim()) { el.focus(); toast('Lengkapi semua field yang wajib diisi', false); return false; } }
+  return true;
+}
+function setDefaults() {
+  const n = new Date(), p = x => String(x).padStart(2, '0');
+  $('#pDate').value = `${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}`; $('#pTime').value = `${p(n.getHours())}:${p(n.getMinutes())}`;
+}
+$('#pForm').onsubmit = async e => {
+  e.preventDefault();
+  if (!need(['#pName', '#pPos', '#pEquip', '#pDate', '#pTime', '#pDesc'])) return;
+  const q = DB.equipment[+$('#pEquip').value], btn = e.submitter; btn.disabled = true;
+  try {
+    const r = await api('addProblem', {reporter: $('#pName').value, position: $('#pPos').value, equipment: q.name, code: q.code,
+      date: $('#pDate').value, time: $('#pTime').value, description: $('#pDesc').value});
+    toast('Laporan tersimpan: ' + r.id); $('#pForm').reset(); setDefaults(); load(true);
+  } catch (err) { toast('Gagal menyimpan laporan: ' + err.message, false); }
+  btn.disabled = false;
+};
+$('#sForm').onsubmit = async e => {
+  e.preventDefault();
+  if (!need(['#sName', '#sPos', '#sEquip', '#sText', '#sImpact'])) return;
+  const q = DB.equipment[+$('#sEquip').value], btn = e.submitter; btn.disabled = true;
+  try {
+    const r = await api('addSuggestion', {reporter: $('#sName').value, position: $('#sPos').value, equipment: q.name, code: q.code,
+      suggestion: $('#sText').value, impact: $('#sImpact').value});
+    toast('Saran tersimpan: ' + r.id); $('#sForm').reset(); load(true);
+  } catch (err) { toast('Gagal menyimpan saran: ' + err.message, false); }
+  btn.disabled = false;
+};
+
+/* init */
+try { setTheme(localStorage.getItem('theme') || 'light'); } catch (e) { setTheme('light'); }
+setDefaults(); load(true);
+setInterval(() => { if (!$('#modal').classList.contains('on') && document.visibilityState === 'visible') load(true); }, REFRESH_MS);
+</script>
+</body>
+</html>
